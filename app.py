@@ -2,8 +2,6 @@
 # import flask module
 from flask import Flask, jsonify, make_response, request
 from flask_restful import Resource, Api, reqparse
-import json
-from types import SimpleNamespace
 
 from PIL import Image
 import requests
@@ -14,6 +12,10 @@ from collections import Counter
 app = Flask(__name__)
 
 api = Api(app)
+
+class Welcome(Resource):
+    def get(self):
+        return {"Message": "Hello world"}
  
 class GetData(Resource):
     def get(self):
@@ -83,6 +85,8 @@ class GetData(Resource):
             return {"messagea": str(e)}, 500
 
 
+
+api.add_resource(Welcome, "/")
 
 api.add_resource(GetData, "/get_most_common_color")
 
