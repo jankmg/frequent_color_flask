@@ -36,7 +36,7 @@ def filter_frequent_color(most_frequent_colors, offset):
     return most_frequent
 
 
-def get_most_frequent_color(url: str, offset: int):
+def find_most_frequent_color(url: str, offset: int):
     pixels = get_pixels_from_image(url)
     top_frequent_colors = get_frequent_values(pixels, len(pixels))
     frequent_color = filter_frequent_color(top_frequent_colors, offset)
