@@ -1,5 +1,6 @@
 # import flask module
 from flask import Flask
+from flask_cors import CORS
 from flask_restful import Api
 
 #import functions
@@ -9,6 +10,7 @@ from controllers.welcome.welcome import welcome
 # instance of flask application
 app = Flask(__name__)
 api = Api(app)
+cors = CORS(app)
 
 api.add_resource(welcome, "/")
 api.add_resource(get_frequent_color, "/get_most_common_color")
