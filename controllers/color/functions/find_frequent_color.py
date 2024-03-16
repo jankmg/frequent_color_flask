@@ -21,64 +21,71 @@ def get_frequent_values(list, length):
     frequent_colors = count.most_common(length)
     return frequent_colors
 
-
-def filter_frequent_color(most_frequent_colors, offset):
-    #to avoid black, white, and gray:
-    #if the most frequent color is darker set value or lighter than set value save it as frequent color
-    most_frequent = (0,0,0)
-    for freq in most_frequent_colors:
-        frequent = tuple(sorted(freq[0], reverse=True))
-        if frequent[0] - frequent[1] < offset and frequent[1] - frequent[2] < offset:
-            continue
-        else:
-            most_frequent = freq[0]
-    print(most_frequent_colors)
-    return most_frequent
-
-
-def find_most_frequent_color(url: str, offset: int):
-    #get pixels
-    pixels = get_pixels_from_image(url)
-    #reorder pixels from most to least common
-    top_frequent_colors = get_frequent_values(pixels, 100)
-    #filter the most frequent color to avoid grayscale colors
-    frequent_color = filter_frequent_color(top_frequent_colors, offset)
-    return frequent_color
-
-
-def organize_colors(color, num_bins, color_cluster):
+def organize_colors(color, colors):
+    #place a color in a list depending on its hue.
     hue = color[0]
+    new_colors = colors
 
-    if len(color_cluster) != num_bins:
-        color_cluster = [[] for _ in range(num_bins)]
-
-    for x in range(num_bins):
-       if hue > 360 / num_bins * (x + 1):
-        color_cluster[x].append(color)
+    if hue > 0 and hue <= 15:
+        new_colors[0].append(color)
+    elif hue > 345:
+        new_colors[0].append(color)
+    elif hue > 15 and hue <= 35:
+        new_colors[1].append(color)
+    elif hue > 35 and hue <= 66:
+        new_colors[2].append(color)
+    elif hue > 66 and hue <= 158:
+        new_colors[3].append(color)
+    elif hue > 158 and hue <= 187:
+        new_colors[4].append(color)
+    elif hue > 187 and hue <= 225:
+        new_colors[5].append(color)
+    elif hue > 225 and hue <= 260:
+        new_colors[6].append(color)
+    elif hue > 260 and hue <= 272:
+        new_colors[7].append(color)
+    elif hue > 272 and hue <= 345:
+        new_colors[8].append(color)
     
-    return color_cluster
+    return new_colors
 
 
 
 def find_most_dominant_color(url: str):
+    #get pixels from image
     pixels = get_pixels_from_image(url)
     top_frequent_colors = get_frequent_values(pixels, len(pixels))
-    
-    colors = []
-    colors_names = ["red", "orange", "yellow", "green", "blue", "violet"]
+    #create categories for colors
+    colors = [[] for _ in range(9)]
+
     for color in top_frequent_colors:
+        #convert rgb to hsl
+        if len(color[0]) != 3:
+            continue
         hsl_color = convert_rgb_to_hsl(color[0])
         hue,saturation,luminance = hsl_color
 
+        #filter colors close or in the grayscale
         if saturation < 20 or luminance < 10 or luminance > 80:
             continue
+        
+        #organize colors by placing them in categories depending on its hue
+        colors = organize_colors(hsl_color, colors)
 
-        colors = organize_colors(hsl_color, len(colors_names), colors)
+    #for debugging: show each color category's length
+    # for color in colors:
+    #     print(len(color))
 
-    for color in colors:
-        print(len(color))
+    #if colors is empty return default value    
+    if all(not color for color in colors):
+        colors[0].append((0,0,10))
     
-    return (max(colors)[0])
+    #slect the category with more colors
+    frequent_color = max(colors, key=len)
+    frequent_color_value = frequent_color[0]
+
+
+    return frequent_color_value
 
     
 

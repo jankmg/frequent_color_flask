@@ -37,4 +37,5 @@ class get_dominant_color (Resource):
 
         #handle errors            
         except Exception as e:
+            print(e)
             return {"messagea": str(e)}, 500
