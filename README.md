@@ -18,9 +18,47 @@ For the API to be accessible, Jank's Colors API uses Flask. To anable cross orig
 
 The API has 2 endpoints: <code>https://api.jankmg.com/</code> for a welcome message and <code>https://api.jankmg.com/get_dominant_color</code> to get the most common color in an image.
 
-When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color</a>).
+When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>).
 
-If everything is okay and an image exists. It executes <code>find_most_dominant_color()</code> function and passes the image url as an argument. 
+If everything is okay and an image exists. It executes the <code>find_most_dominant_color()</code> function and passes the image url as an argument. Here's the entire function:
+
+```
+def find_most_dominant_color(url: str):
+    #get pixels from image
+    pixels = get_pixels_from_image(url)
+    top_frequent_colors = get_frequent_values(pixels, len(pixels))
+    #create categories for colors
+    colors = [[] for _ in range(9)]
+
+    for color in top_frequent_colors:
+        #convert rgb to hsl
+        if len(color[0]) != 3:
+            continue
+        hsl_color = convert_rgb_to_hsl(color[0])
+        hue,saturation,luminance = hsl_color
+
+        #filter colors close or in the grayscale
+        if saturation < 20 or luminance < 10 or luminance > 80:
+            continue
+        
+        #organize colors by placing them in categories depending on its hue
+        colors = organize_colors(hsl_color, colors)
+
+    #for debugging: show each color category's length
+    # for color in colors:
+    #     print(len(color))
+
+    #if colors is empty return default value    
+    if all(not color for color in colors):
+        colors[0].append((0,0,10))
+    
+    #slect the category with more colors
+    frequent_color = max(colors, key=len)
+    frequent_color_value = frequent_color[0]
+
+
+    return frequent_color_value
+```
 
 (I need to expand more on how I used each technology)
 
