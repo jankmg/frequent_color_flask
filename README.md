@@ -60,7 +60,7 @@ def find_most_dominant_color(url: str):
     return frequent_color_value
 ```
 
-First we get the pixels from the image by calling get_pixels_from_image(). We pass the url as an argument.
+First we get the pixels from the image by calling <code>get_pixels_from_image()</code>. We pass the url as an argument.
 
 ```python
 from PIL import Image
@@ -78,7 +78,7 @@ def get_pixels_from_image(url):
 
 ```
 
-But first we need to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. Then we open the image using Pillow, the we use Pillow again to get the pixels by using the <code>getdata()</code> method and storing the values in the <code>pixels</code> variable.
+The first step is to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. After that, we open the image using Pillow, then using Pillow's method <code>getdata()</code> we get the color of each pixel and store the values in the <code>pixels</code> variable.
 
 (I need to expand more on how I used each technology)
 
