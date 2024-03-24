@@ -3,7 +3,7 @@ import requests
 from io import BytesIO
 from collections import Counter
 
-from controllers.color.functions.helpers.convert_rgb_to_hsl import convert_rgb_to_hsl
+from controllers.color.functions.helpers.color_conversion import convert_rgb_to_hsl
 
 def get_pixels_from_image(url):
     #get and open image from url
