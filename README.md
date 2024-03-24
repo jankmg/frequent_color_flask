@@ -78,7 +78,9 @@ def get_pixels_from_image(url):
 
 ```
 
-The first step is to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. After that, we open the image using Pillow, then using Pillow's method <code>getdata()</code> we get the color of each pixel and store the values in the <code>pixels</code> variable.
+The first step is to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. After that, we open the image using Pillow, then using Pillow's method <code>getdata()</code> we get the color of each pixel and store the values in the <code>pixels</code> variable. We return the variable <code>pixels</code>.
+
+
 
 (I need to expand more on how I used each technology)
 

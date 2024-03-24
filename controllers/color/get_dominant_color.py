@@ -6,6 +6,7 @@ from controllers.color.functions.find_frequent_color import find_most_dominant_c
 class get_dominant_color (Resource):
     def get(self):
         #grab arguments
+        print("start")
         parser = reqparse.RequestParser()
         parser.add_argument("image_url", type=str,  help="URL of th eimage", required=True, location='args')
         arguments = parser.parse_args()
