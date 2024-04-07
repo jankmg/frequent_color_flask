@@ -18,23 +18,33 @@ For the API to be accessible, Jank's Colors API uses Flask. To anable cross orig
 
 The API has 2 endpoints: <code>https://api.jankmg.com/</code> for a welcome message and <code>https://api.jankmg.com/get_dominant_color</code> to get the most common color in an image.
 
+Here's the app cycle:
+User makes a request to https://api.jankmg.com/get_dominant_color?image_url:https://example.com/image.jpg.
+The app checks for errors, such as invalid image url and throws any errors found.
+
+
 When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>).
 
 If everything is okay and an image exists. It executes the <code>find_most_dominant_color()</code> function and passes the image url as an argument. Here's the entire function:
 
 ```python
+
 def find_most_dominant_color(url: str):
     #get pixels from image
     pixels = get_pixels_from_image(url)
-    top_frequent_colors = get_frequent_values(pixels, len(pixels))
-    #create categories for colors
-    colors = [[] for _ in range(9)]
+    colors = list(pixels)
+    
+    # red, orange, yellow, green, cyan, light blue, blue, violet, magenta, red
+    colors_threshold = [(0,15), (15,35), (35, 66), (66,168), (168,187), (187,225), (225,260), (260,272), (272,345), (345, 360)]
 
-    for color in top_frequent_colors:
+    #create categories for colors
+    organized_colors = [[] for _ in range(len(colors_threshold) - 1)]
+
+    for color in colors:
         #convert rgb to hsl
-        if len(color[0]) != 3:
+        if len(color) != 3:
             continue
-        hsl_color = convert_rgb_to_hsl(color[0])
+        hsl_color = convert_rgb_to_hsl(color)
         hue,saturation,luminance = hsl_color
 
         #filter colors close or in the grayscale
@@ -42,27 +52,25 @@ def find_most_dominant_color(url: str):
             continue
         
         #organize colors by placing them in categories depending on its hue
-        colors = organize_colors(hsl_color, colors)
-
-    #for debugging: show each color category's length
-    # for color in colors:
-    #     print(len(color))
+        organized_colors = organize_colors(hsl_color, organized_colors, colors_threshold)
 
     #if colors is empty return default value    
-    if all(not color for color in colors):
-        colors[0].append((0,0,10))
-    
+    if all(not color for color in organized_colors):
+        organized_colors[0].append((0,0,10))
+
     #slect the category with more colors
-    frequent_color = max(colors, key=len)
-    frequent_color_value = frequent_color[0]
+    frequent_color_list = max(organized_colors, key=len)
+    sorted_frequent_color = get_frequent_values(frequent_color_list, len(frequent_color_list))
+    frequent_color = sorted_frequent_color[0][0]
 
+    return frequent_color
 
-    return frequent_color_value
 ```
 
 First we get the pixels from the image by calling <code>get_pixels_from_image()</code>. We pass the url as an argument.
 
 ```python
+
 from PIL import Image
 import requests
 from io import BytesIO
@@ -82,6 +90,7 @@ def get_pixels_from_image(url):
         # Resize the image.
         image = image.resize((new_width, new_height))
 
+
     #get the pixels from the image
     pixels = image.getdata()
     return pixels
@@ -90,15 +99,26 @@ def get_pixels_from_image(url):
 
 The first step is to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. After that, we open the image using Pillow, if the image is too big, then we resize it. Then using Pillow's method <code>getdata()</code> we get the color of each pixel and store the values in the <code>pixels</code> variable. We return the variable <code>pixels</code>.
 
+Once we have 
+
 
 
 (I need to expand more on how I used each technology)
 
 ## Optimizations
 
+
+I felt overwhelmed by this small project. I started to think why I felt that way. I realized the code was not organized properly. The concept of the project only existed in my mind. So I thought I would need a visualization. I started making a diagram to show the lifecycle of my app. I realized that was something I should've done before even starting to write code. I talk more about this in <a href="#lessons-learned"></a>.
+
+I made this diagram when the app didn't have a proper handling of errors. I noticed that problem thanks to the diagram itself. It made me realize that I had only worked to get the final expected result, but did not communicate problems and errors clearly, both to the user and to the developer when coding.
+
+![Diagram of early app lifecycle](./readme%20resources/diagram-lack-error-handling.png)
+
 (I need to explain how my approach changed throughout the development)
 
 ## Lessons Learned:
+
+The most important lesson I've learned with this project is planning. I struggle a lot in previous projects, I felt overwhelmed and sometimes that made me not want to continue a project. I think the problem was how little I planned before starting to write code. I did the same on this project, I got to write code from the moment I got the idea; later when judging if the project was ready to be presented as a final project, I realized that while the project did what it was meant to be doing, it was not up to production standards. I've learned that it's better to spend a lot of time cleaning, planning, documenting in the early stages to slowly build a robust program that allows scalability thanks to the constant, clean, and carefully thought structure rather than getting to the final result quickly, but in a clumsy way. Which you will have to modify in the future in order to make changes more manageable.
 
 Before this project, I had no experience in Python. My only experience was in JavaScript, building small projects in React and NodeJS. However, I kept hearing a lot about Python, and I wanted to get into Python. During my journey as a hobbist coder I've learn that the best way to get into something new, is to pair it with something you already know.
 
@@ -111,3 +131,6 @@ First I wrote some simple code to get my Flask app running to show the classic "
 Once I had an application running and after playing around. I decided it was time to investigate image manipulation in Python. I searched on Google how to get colors from pixels of an image. That's when I found out about Pillow. I manage to loop through all the pixels and get each of their colors. And by doing so, I learned about tuples, which is a new type of data type for me, which got me curious about other data types in Python. So I research that for a while, Googling and asking Chat-GPT certain questions which were too specific to find on Google. 
 
 My first atempt was to just get the most repeated RGB color in the list of colors using Counter. But it didn't take into account small variations from color to color. <code>rgb(231,152,184)</code> was considered a different color from <code>rgb(231,152,185)</code>, which to the human eye it's practically the same. So I knew I had to find another way. By reading information about color from different sources and Chat-GPT as well, I figured that in order to make everything more manageable I should convert RGB to HSL. So I wrote an algorithm that does exactly that following this: https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/. I will go through this further. Then I needed a way to take into account small variation in color. So I came up with an idea. Create a list containing an item for each color, have each color have a treshold and then compare each pixel color to that threshold and put it into the list in order from most common to least common. Then check the length of each list and get the first value from that list. It's not perfect but it does a good job at getting the most common color.
+
+## Things I could've done better:
+Better planning. I should've started by documentating what my goal was. How I was planning to implement things. 

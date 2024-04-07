@@ -30,7 +30,7 @@ class get_dominant_color (Resource):
             #if something goes wrong with getting the color, return error response
             if not frequent_color:
                 response_data = {"Error": "Something went wrong"}
-                return response(409, response_data, mimetype)
+                return response(520, response_data, mimetype)
 
             response_data = {"data": {'hsl':frequent_color}}
             return response(200, response_data, mimetype)
