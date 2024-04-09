@@ -1,9 +1,9 @@
 # Jank's Colors API
 
-Jank's Colors API allows you to get different data related to colors in an image. Currently it can get the most common color in an image. This API is used in the Jank's Colors web app.
+Jank's Colors API allows users to retrieve the most common color in an image.
 
 **Link to project:**
-You can checkout Jank's Colors API at: https://api.jankmg.com
+You can checkout Jank's Colors API at: https://api.jankmg.com</br>
 You can checkout Jank's Colors web app at: https://www.jankmg.com
 
 ## How it's used:
@@ -14,15 +14,13 @@ You can checkout Jank's Colors web app at: https://www.jankmg.com
 
 **Tech used:** Python, Flask, Pillow, and more. Checkout <a href="./requirements.txt">requirements.txt</a> for more information
 
-For the API to be accessible, Jank's Colors API uses Flask. To anable cross origin, it uses <code>flask_cors</code>. And to make the requests more manageable it also uses <code>flask_restful</code>. You can check <a href="./app.py">app.py</a> to see how the application gets running.
+The most simple way to explain it is in 3 steps. User makes request, the app find the most common color, and returns the value. But the second step has multiple steps within itself. I'll try to explain each of them briefly and then provide detailed information (including code snippets).
 
-The API has 2 endpoints: <code>https://api.jankmg.com/</code> for a welcome message and <code>https://api.jankmg.com/get_dominant_color</code> to get the most common color in an image.
+When the app receives a request from an user. It checks if the request contains the image. If it doesn't the app responds with an error. If it does exists, then the app get's the color for each pixel. Then the app sorts each color into different categories depending on their hue. The app then checks what category has the most elements, and grabs the most repeated value in that category. That is the most frequent color. Then it returns it in a response.
 
-Here's the app cycle:
-User makes a request to https://api.jankmg.com/get_dominant_color?image_url:https://example.com/image.jpg.
-The app checks for errors, such as invalid image url and throws any errors found.
+Now I will try to explain in detail how the app actually works, meaning how the code works. I will explain what each part of the code does in order to have the final result. The project is written using modular programming in order to implement separation of cencerns standards. Meaning that each function only does one specific task. It currently has an awful error handling, but keep in mind that the app is still in development, so I will change that in the near future.
 
-
+**Start**
 When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>).
 
 If everything is okay and an image exists. It executes the <code>find_most_dominant_color()</code> function and passes the image url as an argument. Here's the entire function:
@@ -66,8 +64,8 @@ def find_most_dominant_color(url: str):
     return frequent_color
 
 ```
-
-First we get the pixels from the image by calling <code>get_pixels_from_image()</code>. We pass the url as an argument.
+**Getting the pixels color**
+The first step is to get the pixels from the image by calling <code>get_pixels_from_image()</code>. Then pass the url as a parameter.
 
 ```python
 
@@ -97,9 +95,64 @@ def get_pixels_from_image(url):
 
 ```
 
-The first step is to convert the url to a file. We do that by using <code>requests.get(url)</code> and passing the url as a parameter. After that, we open the image using Pillow, if the image is too big, then we resize it. Then using Pillow's method <code>getdata()</code> we get the color of each pixel and store the values in the <code>pixels</code> variable. We return the variable <code>pixels</code>.
+The first step is to convert the url to a file. Which is accomplished by using <code>requests.get(url)</code> After that, open the image using Pillow, if the image is too big, the app resize it to have better performance (resizing needs improvement). Then using Pillow's method <code>getdata()</code> to get the color of each pixel, the values are stored in the variable <code>pixels</code>. The variable <code>pixels</code> it's returned.
 
-Once we have 
+**Organizing colors**
+The next step is to find the most common color in that list. To take into account small variation in colors (for example rgb(250,0,0) and rgb(249,0,0)), the app organizes the colors in a nested list. Each sublist represents a different color, and if a color matches the hue, it is stored in that sublist. Then the app checks which sublist has the greatest lenght, meaning which color is most frequently found in the image. Then it grabs the most frequent value inside that sublist, meaning the value that repeats itself the most. The result is the most frequent color in the whole image.
+
+**Converting rgb to hsl**
+But managing colors in rgb can be quite hard. So in order to make the organization process easier the app converts the rgb values into HSL. It follows the formula explained in: https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/. 
+
+Here's the code for that: 
+
+```python
+
+def convert_rgb_to_hsl(rgb):
+    #convert rgb values to percentages
+    red, green, blue = rgb
+    r = red / 255
+    g = green / 255
+    b = blue / 255
+
+    #find max and min values of rgb
+    max_rgb = max(r,g,b)
+    min_rgb = min(r, g, b)
+
+    #calculate raw luminance (raw = decimals)
+    #calculate luminance by converting it into a percentage
+    raw_luminance =  (min_rgb + max_rgb) / 2
+    luminance = round(raw_luminance * 100)
+
+    #if min and max rgb are the same, it means there's no saturation. If there's no saturation, you don't need to calculate hue; we only set it to 0
+    if min_rgb == max_rgb:
+        saturation = 0
+        hue = 0
+        hsl = [hue, saturation, luminance]
+        return hsl
+
+    #if min and max are not the same. Calculate saturation
+    if raw_luminance <= 0.5:
+        raw_saturation = (max_rgb - min_rgb)/(max_rgb + min_rgb)
+    else:
+        raw_saturation = (max_rgb - min_rgb)/(2.0-max_rgb-min_rgb)
+    saturation = round(raw_saturation * 100)
+
+    #and calculate hue
+    if max_rgb == r:
+        raw_hue = (g - b) / (max_rgb - min_rgb)
+    elif max_rgb == g:
+        raw_hue = 2.0 + (b - r) / (max_rgb - min_rgb)
+    elif max_rgb == b:
+        raw_hue = 4.0 + (r-g) / (max_rgb - min_rgb)
+
+    hue = round(raw_hue * 60)
+    if hue < 0:
+        hue = hue + 360
+
+    hsl = [hue, saturation, luminance]
+    return hsl
+
+```
 
 
 
@@ -114,7 +167,12 @@ I made this diagram when the app didn't have a proper handling of errors. I noti
 
 ![Diagram of early app lifecycle](./readme%20resources/diagram-lack-error-handling.png)
 
+My current structure only checks for one error. Then it basically returns to the user whatever each library returns. It is not very user friendly, since those libraries throw errors meant for developers, not users. 
+
 (I need to explain how my approach changed throughout the development)
+How I changed the way the algorithm organizes colors.
+I changed how the most frequent color is found
+I will change the error handling.
 
 ## Lessons Learned:
 
