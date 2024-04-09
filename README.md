@@ -3,7 +3,7 @@
 Jank's Colors API allows users to retrieve the most common color in an image.
 
 **Link to project:**
-You can checkout Jank's Colors API at: https://api.jankmg.com</br>
+You can checkout Jank's Colors API at: https://api.jankmg.com  
 You can checkout Jank's Colors web app at: https://www.jankmg.com
 
 ## How it's used:
@@ -14,16 +14,22 @@ You can checkout Jank's Colors web app at: https://www.jankmg.com
 
 **Tech used:** Python, Flask, Pillow, and more. Checkout <a href="./requirements.txt">requirements.txt</a> for more information
 
-The most simple way to explain it is in 3 steps. User makes request, the app find the most common color, and returns the value. But the second step has multiple steps within itself. I'll try to explain each of them briefly and then provide detailed information (including code snippets).
 
-When the app receives a request from an user. It checks if the request contains the image. If it doesn't the app responds with an error. If it does exists, then the app get's the color for each pixel. Then the app sorts each color into different categories depending on their hue. The app then checks what category has the most elements, and grabs the most repeated value in that category. That is the most frequent color. Then it returns it in a response.
+Here's the main cycle:
 
-Now I will try to explain in detail how the app actually works, meaning how the code works. I will explain what each part of the code does in order to have the final result. The project is written using modular programming in order to implement separation of cencerns standards. Meaning that each function only does one specific task. It currently has an awful error handling, but keep in mind that the app is still in development, so I will change that in the near future.
+- Request is received
+    - Input validation.
+    - Retrive colors from each pixel.
+    - Convert colors into hsl.
+    - Organazie colors into categories based on hue.
+    - Find the category with most colors and the most common color within that category.
+    - Return the most frequent color as response.
 
-**Start**
-When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>).
 
-If everything is okay and an image exists. It executes the <code>find_most_dominant_color()</code> function and passes the image url as an argument. Here's the entire function:
+Now I will try to explain in detail how the code actually works I will explain what each part of the code does in order to have the final result. The project is written using modular programming in order to implement separation of cencerns standards. Meaning that each function only does one specific task. It currently has an awful error handling, but keep in mind that the app is still in development, so I will change that in the near future.
+
+### Input validation
+When the user visits https://api.jankmg.com/get_dominant_color, the <code>get_dominant_color</code> function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>). If everything is okay and an image exists. It executes the <code>find_most_dominant_color()</code> function and passes the image url as an argument. I will break down the code, but for now; here's the entire function:
 
 ```python
 
@@ -64,9 +70,9 @@ def find_most_dominant_color(url: str):
     return frequent_color
 
 ```
-**Getting the pixels color**
-The first step is to get the pixels from the image by calling <code>get_pixels_from_image()</code>. Then pass the url as a parameter.
-
+### Retriving color from each pixel
+Function in use: <code>get_pixels_from_image(url)</code>.  
+Whole function:
 ```python
 
 from PIL import Image
@@ -95,9 +101,41 @@ def get_pixels_from_image(url):
 
 ```
 
-The first step is to convert the url to a file. Which is accomplished by using <code>requests.get(url)</code> After that, open the image using Pillow, if the image is too big, the app resize it to have better performance (resizing needs improvement). Then using Pillow's method <code>getdata()</code> to get the color of each pixel, the values are stored in the variable <code>pixels</code>. The variable <code>pixels</code> it's returned.
+#### Breakdown:
+The colors are stored as a list in the variable <code>colors</code>. We get those colors by executing the function <code>get_pixels_from_image(url)</code>. The <code>get_pixels_from_image(url)</code> function gets the data from the url using the <code>get</code> method from the <code>requests</code> library. Then it opens it as an image using Pillow and io.
 
-**Organizing colors**
+```python
+from PIL import Image
+import requests
+from io import BytesIO
+
+    img = requests.get(url) 
+    image = Image.open(BytesIO(img.content))
+```
+
+Then the app checks if the image is too big. If it is too big, it resize it in order to be easier to calculate. Then using the <code>getdata</code> method from Pillow, it retrieves the color of each pixel. And it returns the pixels.
+
+```python
+    if image.size > (1000, 1000):
+        width, height = image.size
+
+        # Calculate the new width and height.
+        new_width = int(1000 * width / height)
+        new_height = int(1000 * height / width)
+
+        # Resize the image.
+        image = image.resize((new_width, new_height))
+
+
+    #get the pixels from the image
+    pixels = image.getdata()
+    return pixels
+```
+### Organizing colors
+__Note:__ The app currently has the color from each pixel. Now it needs to find the most common color. In order to do that, it sorts the colors, placing each color on a category based on its hue. That requires a for loop. But in order to make the calculations simpler, it converts the rgb colors into hsl. Which also requires a for loop. So the app only runs a single for loop. In each iteration, the app converts the color to hsl and places it inside a category.
+
+
+
 The next step is to find the most common color in that list. To take into account small variation in colors (for example rgb(250,0,0) and rgb(249,0,0)), the app organizes the colors in a nested list. Each sublist represents a different color, and if a color matches the hue, it is stored in that sublist. Then the app checks which sublist has the greatest lenght, meaning which color is most frequently found in the image. Then it grabs the most frequent value inside that sublist, meaning the value that repeats itself the most. The result is the most frequent color in the whole image.
 
 **Converting rgb to hsl**
