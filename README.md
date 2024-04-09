@@ -134,9 +134,42 @@ Then the app checks if the image is too big. If it is too big, it resize it in o
 ### Organizing colors
 __Note:__ The app currently has the color from each pixel. Now it needs to find the most common color. In order to do that, it sorts the colors, placing each color on a category based on its hue. That requires a for loop. But in order to make the calculations simpler, it converts the rgb colors into hsl. Which also requires a for loop. So the app only runs a single for loop. In each iteration, the app converts the color to hsl and places it inside a category.
 
+```python
+    #get pixels from image
+    pixels = get_pixels_from_image(url)
+    colors = list(pixels)
+    
+    # red, orange, yellow, green, cyan, light blue, blue, violet, magenta, red
+    colors_threshold = [(0,15), (15,35), (35, 66), (66,168), (168,187), (187,225), (225,260), (260,272), (272,345), (345, 360)]
 
+    #create categories for colors
+    organized_colors = [[] for _ in range(len(colors_threshold) - 1)]
+```
 
-The next step is to find the most common color in that list. To take into account small variation in colors (for example rgb(250,0,0) and rgb(249,0,0)), the app organizes the colors in a nested list. Each sublist represents a different color, and if a color matches the hue, it is stored in that sublist. Then the app checks which sublist has the greatest lenght, meaning which color is most frequently found in the image. Then it grabs the most frequent value inside that sublist, meaning the value that repeats itself the most. The result is the most frequent color in the whole image.
+In the code above, we can see the colors stored in the variable <code>colors</code> and two new variables, <code></code>colors_threshold</code>, <code>organized_colors</code>. The variable <code>colors_threshold</code> is a list containing the tuples that represent threshold ranges for different colors  on a scale from 0 to 360. For example, green starts at 66 and ends at 168. The variable <code>organized_colors</code> is dynamically defined based on the length of <code>color_threshold</code>. This variable containes the "categories" in which each color value inside the <code>colors</code> list will be placed in depending on its hue.
+
+After that, a for loop based on the list <code>colors</code> is executed.
+```python
+for color in colors:
+        #convert rgb to hsl
+        if len(color) != 3:
+            continue
+        hsl_color = convert_rgb_to_hsl(color)
+        hue,saturation,luminance = hsl_color
+
+        #filter colors close or in the grayscale
+        if saturation < 20 or luminance < 10 or luminance > 80:
+            continue
+        
+        #organize colors by placing them in categories depending on its hue
+        organized_colors = organize_colors(hsl_color, organized_colors, colors_threshold)
+```
+
+For every value inside colors, it checks if the value has a lenght of 3. If it does, then it converts the rgb color into hsl.
+
+Once it has the hue, saturation, and luminance. It checks if the color falls within the grayscale (or close to it) by comparing if the saturaton and luminance fall within the ranges of grayscale colors. If it does fall within that range, the color is skiped and the loop jumps into the next iteration. If it doesn't fall within the grayscale, it then runs the <code>organize_colors</code> function. Which as its name sugguests, it organizes places the color within a sublist inside the <code>organized_colors</code> based on the color hue.
+
+//////////////////////////////////////
 
 **Converting rgb to hsl**
 But managing colors in rgb can be quite hard. So in order to make the organization process easier the app converts the rgb values into HSL. It follows the formula explained in: https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/. 
