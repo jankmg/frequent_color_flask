@@ -32,16 +32,20 @@ def get_frequent_values(list, length):
     frequent_colors = count.most_common(length)
     return frequent_colors
 
-def organize_colors(color, colors, thresholds):
+def categorize_colors(color, colors, thresholds):
     hue = color[0]
     new_colors = colors
     
+    #get the index
     for index, threshold in enumerate(thresholds):
+        #if the hue of the color is higher than the first starting point in the threshold and lower than the threshold append it into a color category
         if hue > threshold[0] and hue <= threshold[1]:
+            #if it's the last threshold append it to the first category (red) since red is both the first and last threshold
             if index == len(thresholds) - 1:
                 new_colors[0].append(tuple(color))
                 break
             else:
+                #if it's not the last threshold then append it to the current color category
                 new_colors[index].append(tuple(color))
                 break
 
@@ -71,7 +75,7 @@ def find_most_dominant_color(url: str):
             continue
         
         #organize colors by placing them in categories depending on its hue
-        organized_colors = organize_colors(hsl_color, organized_colors, colors_threshold)
+        organized_colors = categorize_colors(hsl_color, organized_colors, colors_threshold)
 
     #if colors is empty return default value    
     if all(not color for color in organized_colors):
