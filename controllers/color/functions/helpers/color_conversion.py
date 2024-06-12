@@ -44,3 +44,23 @@ def convert_rgb_to_hsl(rgb):
 
     hsl = [hue, saturation, luminance]
     return hsl
+
+def convert_hsl_to_rgb(hsl):
+    #separate hue, saturation, luminance. 
+    #convert saturation and luminance into percentages
+    hue,saturation,luminance = hsl
+    saturation = saturation / 100
+    luminance = luminance / 100
+
+    c = (1 - abs(2 * luminance - 1)) * saturation
+    x = c * (1 - abs((hue / 60) % 2 - 1))
+    m = luminance - c/2
+
+    #based on the hue, choose an order in which the variables above fall into the rgb channels
+    cases = [(c,x,0), (x,c,0), (0,c,x), (0,x,c), (x,0,c), (c,0,x)]
+    for i in range(int(360/60)):
+        if i*60 < hue < (i + 1)*60:
+            r,g,b = cases[i]
+    
+    rgb = (round((r+m)*255), round((g+m)*255), round((b+m)*255))
+    return rgb

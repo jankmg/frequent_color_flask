@@ -1,9 +1,10 @@
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import requests
 from io import BytesIO
 from collections import Counter
 
 from controllers.color.functions.helpers.color_conversion import convert_rgb_to_hsl
+from controllers.color.functions.helpers.color_conversion import convert_hsl_to_rgb
 
 def get_pixels_from_image(url):
     #get and open image from url
@@ -54,8 +55,24 @@ def categorize_colors(color, colors, thresholds):
 
 def find_most_dominant_color(url: str):
     #get pixels from image
-    pixels = get_pixels_from_image(url)
-    colors = list(pixels)
+    try:
+        if not url.startswith(("http://", "https://")):
+            raise requests.exceptions.InvalidURL("Invalid URL. Must start with 'https://' or 'http://'")
+
+        pixels = get_pixels_from_image(url)
+        colors = list(pixels)
+    except requests.exceptions.InvalidURL as e:
+        print("Error: ", e)
+        return [422, False, "Invalid URL. Please try again with another one. URL must start with 'https://' or 'http://'", ""]
+    except requests.exceptions.Timeout as e:
+        print("Error: ", e)
+        return [408, False, "Timeout error. Try again with another URL"]
+    except UnidentifiedImageError as e:
+        print("Error: ", e)
+        return [422, False, "Not an image", ""]
+    except Exception as e:
+        print("Error: ", e )
+        return [500, False, "Something went wrong", ""]
     
     # red, orange, yellow, green, cyan, light blue, blue, violet, magenta, red
     colors_threshold = [(0,15), (15,35), (35, 66), (66,168), (168,187), (187,225), (225,260), (260,272), (272,345), (345, 360)]
@@ -65,9 +82,9 @@ def find_most_dominant_color(url: str):
 
     for color in colors:
         #convert rgb to hsl
-        if len(color) != 3:
+        if len(color) < 3:
             continue
-        hsl_color = convert_rgb_to_hsl(color)
+        hsl_color = convert_rgb_to_hsl((color[0], color[1], color[2]))
         hue,saturation,luminance = hsl_color
 
         #filter colors close or in the grayscale
@@ -77,13 +94,18 @@ def find_most_dominant_color(url: str):
         #organize colors by placing them in categories depending on its hue
         organized_colors = categorize_colors(hsl_color, organized_colors, colors_threshold)
 
-    #if colors is empty return default value    
+    #if colors is empty return default value
     if all(not color for color in organized_colors):
         organized_colors[0].append((0,0,10))
+
 
     #slect the category with more colors
     frequent_color_list = max(organized_colors, key=len)
     sorted_frequent_color = get_frequent_values(frequent_color_list, len(frequent_color_list))
-    frequent_color = sorted_frequent_color[0][0]
+    frequent_color_hsl = sorted_frequent_color[0][0]
+    # print("color: ", convert_hsl_to_rgb(frequent_color_hsl))
+    frequent_color_rgb = convert_hsl_to_rgb(frequent_color_hsl)
+    data = [frequent_color_hsl, frequent_color_rgb]
+    frequent_color_data = [200, True, "Most common color sucessfully found", data]
 
-    return frequent_color
+    return frequent_color_data

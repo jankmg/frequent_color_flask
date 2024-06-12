@@ -18,18 +18,18 @@ You can checkout Jank's Colors web app at: https://www.jankmg.com
 Here's the main cycle:
 
 - Request is received
-    - Input validation.
-    - Retrive colors from each pixel.
-    - Convert colors into hsl.
-    - Organazie colors into categories based on hue.
-    - Find the category with most colors and the most common color within that category.
-    - Return the most frequent color as response.
+- Input validation.
+- Retrive colors from each pixel.
+- Convert colors into hsl.
+- Organazie colors into categories based on hue.
+- Find the category with most colors and the most common color within that category.
+- Return the most frequent color as response.
 
 
-Now I will try to explain in detail how the code actually works I will explain what each part of the code does in order to have the final result. The project is written using modular programming in order to implement separation of cencerns standards. Meaning that each function only does one specific task. It currently has an awful error handling, but keep in mind that the app is still in development, so I will change that in the near future.
+I will try to explain in detail how the code actually works. I will explain what each part of the code does in order to have the final result. The project is written using modular programming in order to implement separation of cencerns standards. Meaning that each function only does one specific task. It currently has an awful error handling, but keep in mind that the app is still in development, so I will change that in the near future.
 
 ### Input validation
-When the user visits https://api.jankmg.com/get_dominant_color, the `get_dominant_color` function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>). If everything is okay and an image exists. It executes the `find_most_dominant_color()` function and passes the image url as an argument. I will break down the code, but for now; here's the entire function:
+When the user visits https://api.jankmg.com/get_dominant_color, the `get_dominant_color` function is executed. It catches different errors, such as an image not existing, etc. (You can check the full code here: <a href="./controllers/color/get_dominant_color.py">get_dominant_color.py</a>). If everything is okay and an image exists. It executes the `find_most_dominant_color()` function and passes the image url as an argument. I will break down the code, but for now, here's the entire function:
 
 ```python
 
@@ -355,16 +355,6 @@ Then we return that value to the response handler.
     return frequent_color
 ```
 
-//////////////////////////////////////
-I need to break the organization part of the function into smaller parts. One for organizing an dthe other for converting to hsl
-
-
-
-Here's the code for that: 
-
-
-
-
 (I need to expand more on how I used each technology)
 
 ## Optimizations
@@ -397,7 +387,7 @@ First I wrote some simple code to get my Flask app running to show the classic "
 
 Once I had an application running and after playing around. I decided it was time to investigate image manipulation in Python. I searched on Google how to get colors from pixels of an image. That's when I found out about Pillow. I manage to loop through all the pixels and get each of their colors. And by doing so, I learned about tuples, which is a new type of data type for me, which got me curious about other data types in Python. So I research that for a while, Googling and asking Chat-GPT certain questions which were too specific to find on Google. 
 
-My first atempt was to just get the most repeated RGB color in the list of colors using Counter. But it didn't take into account small variations from color to color. `rgb(231,152,184)` was considered a different color from `rgb(231,152,185)`, which to the human eye it's practically the same. So I knew I had to find another way. By reading information about color from different sources and Chat-GPT as well, I figured that in order to make everything more manageable I should convert RGB to HSL. So I wrote an algorithm that does exactly that following this: https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/. I will go through this further. Then I needed a way to take into account small variation in color. So I came up with an idea. Create a list containing an item for each color, have each color have a treshold and then compare each pixel color to that threshold and put it into the list in order from most common to least common. Then check the length of each list and get the first value from that list. It's not perfect but it does a good job at getting the most common color.
+My first atempt was to just get the most repeated RGB color in the list of colors using Counter. But it didn't take into account small variations from color to color. `rgb(231,152,184)` was considered a different color from `rgb(231,152,185)`, which to the human eye it's practically the same. So I knew I had to find another way. By reading information about color from different sources and Chat-GPT as well, I figured that in order to make everything more manageable I should convert RGB to HSL. So I wrote an algorithm that does exactly that following this: https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/. I will go through this further. Then I needed a way to take into account small variation in color. So I came up with an idea. Create a list containing an item for each color, have each color have a threshold and then compare each pixel color to that threshold and put it into the list in order from most common to least common. Then check the length of each list and get the first value from that list. It's not perfect but it does a good job at getting the most common color.
 
 ## Things I could've done better:
-Better planning. I should've started by documentating what my goal was. How I was planning to implement things. 
+Better planning. I should've started by documenting what my goal was. How I was planning to implement things. 
