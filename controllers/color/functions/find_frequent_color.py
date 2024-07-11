@@ -6,10 +6,9 @@ from collections import Counter
 from controllers.color.functions.helpers.color_conversion import convert_rgb_to_hsl
 from controllers.color.functions.helpers.color_conversion import convert_hsl_to_rgb
 
-def get_pixels_from_image(url):
+
+def get_pixels_from_image(image):
     #get and open image from url
-    img = requests.get(url) 
-    image = Image.open(BytesIO(img.content))
 
     if image.size > (1000, 1000):
         width, height = image.size
@@ -53,13 +52,19 @@ def categorize_colors(color, colors, thresholds):
     return new_colors
 
 
-def find_most_dominant_color(url: str):
+def find_most_dominant_color(url, image):
     #get pixels from image
     try:
-        if not url.startswith(("http://", "https://")):
-            raise requests.exceptions.InvalidURL("Invalid URL. Must start with 'https://' or 'http://'")
+        if image:
+            image = Image.open((image))
+        if url and not image:
+            if not url.startswith(("http://", "https://")):
+                raise requests.exceptions.InvalidURL("Invalid URL. Must start with 'https://' or 'http://'")
+            img = requests.get(url) 
+            image = Image.open(BytesIO(img.content))
 
-        pixels = get_pixels_from_image(url)
+
+        pixels = get_pixels_from_image(image)
         colors = list(pixels)
     except requests.exceptions.InvalidURL as e:
         print("Error: ", e)
